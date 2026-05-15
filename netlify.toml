@@ -1,0 +1,11 @@
+# Netlify configuration for KCU chatbot
+
+[build]
+  # Static files (index.html) live in the root of the repo
+  publish = "."
+  # Functions live in this folder
+  functions = "netlify/functions"
+
+# Optional: set Node.js version for functions
+[functions]
+  node_bundler = "esbuild"
