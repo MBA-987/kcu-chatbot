@@ -57,7 +57,7 @@ A food parcel contains at least 3 days' worth of meals: cereal, soup, pasta, ric
 Partner Agents where food parcels are issued:
 1. Salvation Army — Monday & Tuesday 10:00am-12:00pm (Mon: Benefits Advisor / Tue: Debt Advisor)
 2. NNCAB (North Northamptonshire Citizens Advice Bureau)
-3. Rothwell Pantry — Tuesday am and Thursday pm (Tue: Benefits Advisor / Thu: Debt Advisor)
+3. Holy Trinity Church, Rothwell, every Tuesday between 10am and 12 pm
 4. NNC – Kettering (North Northamptonshire Council)
 5. Snap Dragon & Bop — Thursday am (Benefits Advisor)
 6. Burton Latimer Library — each day
@@ -66,7 +66,7 @@ Partner Agents where food parcels are issued:
 Over a dozen mini foodbanks at various locations.
 
 ## Low cost shop (Get Help)
-KCU's low-cost shop is in the Newlands Centre in Kettering. Open Monday–Friday, 9am–4pm. Sells pre-loved goods affordably.
+KCU's low-cost shop is in the Newlands Centre in Kettering. Open Monday–Sunday, 9am–4pm. Sells pre-loved goods affordably.
 
 ## Education & training (Get Help)
 Free training and education courses. Up to 20 courses per term, 3 terms a year.
@@ -87,7 +87,7 @@ Benefits: social support, personal development, employment up-skilling, mentor/b
 
 Four roles:
 1. Community Events Volunteer — represents KCU at events, awareness stands, jobs fairs, supermarket drives, bucket collections. 3–4 hour shifts including weekends.
-2. Low Cost Shop Volunteer — works in Newlands Centre shop Mon–Fri 9am–4pm. Training provided.
+2. Low Cost Shop Volunteer — works in Newlands Centre shop Mon–Sunday 9am–4pm. Training provided.
 3. Mentor/Befriender Volunteer — trained volunteers working 1:1 with mentees weekly. Requires informal interview, DBS check, training.
 4. Foodbank Volunteer — helps in warehouse and distribution centres.
 
