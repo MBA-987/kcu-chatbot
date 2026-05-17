@@ -2,10 +2,11 @@
 // Password-protected viewer for logged KCU chatbot conversations.
 // Access: https://YOUR-SITE.netlify.app/.netlify/functions/admin?p=YOUR_PASSWORD
 // Password is read from the ADMIN_PASSWORD environment variable in Netlify.
+// Uses modern Netlify Functions API so @netlify/blobs auto-configures.
 
-const { getStore } = require('@netlify/blobs');
+import { getStore } from '@netlify/blobs';
 
-exports.handler = async function(event) {
+export default async (req, context) => {
   const adminPassword = process.env.ADMIN_PASSWORD;
 
   if (!adminPassword) {
@@ -15,7 +16,8 @@ exports.handler = async function(event) {
     );
   }
 
-  const password = event.queryStringParameters?.p || '';
+  const url = new URL(req.url);
+  const password = url.searchParams.get('p') || '';
 
   // No password or wrong password → show login form
   if (password !== adminPassword) {
@@ -52,11 +54,10 @@ exports.handler = async function(event) {
 // === HTML helpers ===
 
 function htmlResponse(body) {
-  return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    body: pageWrapper(body)
-  };
+  return new Response(pageWrapper(body), {
+    status: 200,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+  });
 }
 
 function pageWrapper(content) {
@@ -257,10 +258,6 @@ function dashboardPage(conversations, password) {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   const totalSessions = conversations.length;
-  const totalMessages = conversations.reduce(
-    (sum, c) => sum + (c.messages?.length || 0),
-    0
-  );
   const totalUserMessages = conversations.reduce(
     (sum, c) => sum + (c.messages?.filter(m => m.role === 'user').length || 0),
     0

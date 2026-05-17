@@ -1,9 +1,11 @@
 // Netlify Function: KCU Chatbot
 // Receives a chat conversation and returns a Claude-generated reply.
+// Uses modern Netlify Functions API (export default + Request/Response)
+// so that @netlify/blobs auto-configures from the function context.
 // The API key is read from the ANTHROPIC_API_KEY environment variable
 // set in Netlify — NEVER paste the key into this file or anywhere public.
 
-const { getStore } = require('@netlify/blobs');
+import { getStore } from '@netlify/blobs';
 
 const KCU_KNOWLEDGE = `
 # KCU Knowledge Base
@@ -194,47 +196,44 @@ Always offer to put them in touch with a real KCU person at 01536 481989 if they
 Foodbank help requires a referral from a partner organisation — make sure to mention this when someone asks about getting food. The partner organisations are listed in your knowledge above.
 `;
 
-exports.handler = async function(event) {
-  // CORS headers — allow the chat widget to call this function
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Content-Type': 'application/json'
-  };
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Type': 'application/json'
+};
 
+export default async (req, context) => {
   // Handle CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
+  if (req.method === 'OPTIONS') {
+    return new Response('', { status: 200, headers: corsHeaders });
   }
 
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: corsHeaders }
+    );
   }
 
   try {
-    const { messages, sessionId } = JSON.parse(event.body || '{}');
+    const body = await req.json();
+    const { messages, sessionId } = body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'No messages provided' })
-      };
+      return new Response(
+        JSON.stringify({ error: 'No messages provided' }),
+        { status: 400, headers: corsHeaders }
+      );
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       console.error('ANTHROPIC_API_KEY environment variable not set');
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({ error: 'Server configuration error' })
-      };
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { status: 500, headers: corsHeaders }
+      );
     }
 
     // Call the Anthropic API
@@ -256,25 +255,22 @@ exports.handler = async function(event) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Anthropic API error:', response.status, errorText);
-      return {
-        statusCode: response.status,
-        headers,
-        body: JSON.stringify({ error: 'AI service error' })
-      };
+      return new Response(
+        JSON.stringify({ error: 'AI service error' }),
+        { status: response.status, headers: corsHeaders }
+      );
     }
 
     const data = await response.json();
     const reply = data.content?.[0]?.text || "Sorry, I couldn't generate a reply.";
 
-    // === Log this exchange to Netlify Blobs ===
-    // Wrapped in try/catch so logging errors don't break the chat reply.
+    // Log this exchange to Netlify Blobs (non-fatal if it fails)
     try {
       if (sessionId) {
         const store = getStore('conversations');
         const now = new Date().toISOString();
         const userMessage = messages[messages.length - 1]?.content || '';
 
-        // Load existing conversation (if any) and append this exchange
         let convo = await store.get(sessionId, { type: 'json' });
         if (!convo) {
           convo = {
@@ -294,17 +290,15 @@ exports.handler = async function(event) {
       console.error('Conversation logging failed (non-fatal):', logErr);
     }
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ reply })
-    };
+    return new Response(
+      JSON.stringify({ reply }),
+      { status: 200, headers: corsHeaders }
+    );
   } catch (err) {
     console.error('Function error:', err);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Something went wrong' })
-    };
+    return new Response(
+      JSON.stringify({ error: 'Something went wrong' }),
+      { status: 500, headers: corsHeaders }
+    );
   }
 };
