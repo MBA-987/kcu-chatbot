@@ -1,0 +1,9 @@
+{
+  "name": "kcu-chatbot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KCU AI assistant chatbot",
+  "dependencies": {
+    "@netlify/blobs": "^10.0.0"
+  }
+}
