@@ -299,7 +299,7 @@
   </form>
 
   <div class="footer-note">
-    KCU Assistant is an AI. For urgent help, call <strong>01536 481989</strong>.
+    KCU Assistant is an AI. Conversations may be reviewed to help us improve. For urgent help, call <strong>01536 481989</strong>.
   </div>
 
   <script>
@@ -308,6 +308,24 @@
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('sendBtn');
     const quickReplies = document.getElementById('quickReplies');
+
+    // === Session ID ===
+    // Each user's browser gets a unique ID stored in localStorage.
+    // Same browser/device = same ID across refreshes and return visits,
+    // which lets us count distinct users (not just messages).
+    let sessionId;
+    try {
+      sessionId = localStorage.getItem('kcu_session_id');
+      if (!sessionId) {
+        sessionId = 's_' + Date.now().toString(36) + '_' +
+          Math.random().toString(36).slice(2, 10);
+        localStorage.setItem('kcu_session_id', sessionId);
+      }
+    } catch (e) {
+      // Some browsers / private modes block localStorage — fall back to a one-shot ID
+      sessionId = 's_' + Date.now().toString(36) + '_' +
+        Math.random().toString(36).slice(2, 10);
+    }
 
     // Conversation history sent to Claude
     const messages = [];
@@ -389,7 +407,7 @@
         const res = await fetch('/.netlify/functions/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages })
+          body: JSON.stringify({ messages, sessionId })
         });
 
         hideTyping();
