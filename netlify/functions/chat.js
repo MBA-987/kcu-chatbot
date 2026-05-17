@@ -3,6 +3,8 @@
 // The API key is read from the ANTHROPIC_API_KEY environment variable
 // set in Netlify — NEVER paste the key into this file or anywhere public.
 
+const { getStore } = require('@netlify/blobs');
+
 const KCU_KNOWLEDGE = `
 # KCU Knowledge Base
 
@@ -57,7 +59,7 @@ A food parcel contains at least 3 days' worth of meals: cereal, soup, pasta, ric
 Partner Agents where food parcels are issued:
 1. Salvation Army — Monday & Tuesday 10:00am-12:00pm (Mon: Benefits Advisor / Tue: Debt Advisor)
 2. NNCAB (North Northamptonshire Citizens Advice Bureau)
-3. Holy Trinity Church, Rothwell, every Tuesday between 10am and 12 pm
+3. Rothwell Pantry — Tuesday am and Thursday pm (Tue: Benefits Advisor / Thu: Debt Advisor)
 4. NNC – Kettering (North Northamptonshire Council)
 5. Snap Dragon & Bop — Thursday am (Benefits Advisor)
 6. Burton Latimer Library — each day
@@ -66,7 +68,7 @@ Partner Agents where food parcels are issued:
 Over a dozen mini foodbanks at various locations.
 
 ## Low cost shop (Get Help)
-KCU's low-cost shop is in the Newlands Centre in Kettering. Open Monday–Sunday, 9am–4pm. Sells pre-loved goods affordably.
+KCU's low-cost shop is in the Newlands Centre in Kettering. Open Monday–Friday, 9am–4pm. Sells pre-loved goods affordably.
 
 ## Education & training (Get Help)
 Free training and education courses. Up to 20 courses per term, 3 terms a year.
@@ -87,7 +89,7 @@ Benefits: social support, personal development, employment up-skilling, mentor/b
 
 Four roles:
 1. Community Events Volunteer — represents KCU at events, awareness stands, jobs fairs, supermarket drives, bucket collections. 3–4 hour shifts including weekends.
-2. Low Cost Shop Volunteer — works in Newlands Centre shop Mon–Sunday 9am–4pm. Training provided.
+2. Low Cost Shop Volunteer — works in Newlands Centre shop Mon–Fri 9am–4pm. Training provided.
 3. Mentor/Befriender Volunteer — trained volunteers working 1:1 with mentees weekly. Requires informal interview, DBS check, training.
 4. Foodbank Volunteer — helps in warehouse and distribution centres.
 
@@ -215,7 +217,7 @@ exports.handler = async function(event) {
   }
 
   try {
-    const { messages } = JSON.parse(event.body || '{}');
+    const { messages, sessionId } = JSON.parse(event.body || '{}');
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return {
@@ -263,6 +265,34 @@ exports.handler = async function(event) {
 
     const data = await response.json();
     const reply = data.content?.[0]?.text || "Sorry, I couldn't generate a reply.";
+
+    // === Log this exchange to Netlify Blobs ===
+    // Wrapped in try/catch so logging errors don't break the chat reply.
+    try {
+      if (sessionId) {
+        const store = getStore('conversations');
+        const now = new Date().toISOString();
+        const userMessage = messages[messages.length - 1]?.content || '';
+
+        // Load existing conversation (if any) and append this exchange
+        let convo = await store.get(sessionId, { type: 'json' });
+        if (!convo) {
+          convo = {
+            sessionId,
+            startedAt: now,
+            lastActivity: now,
+            messages: []
+          };
+        }
+        convo.lastActivity = now;
+        convo.messages.push({ role: 'user', content: userMessage, timestamp: now });
+        convo.messages.push({ role: 'assistant', content: reply, timestamp: now });
+
+        await store.setJSON(sessionId, convo);
+      }
+    } catch (logErr) {
+      console.error('Conversation logging failed (non-fatal):', logErr);
+    }
 
     return {
       statusCode: 200,
